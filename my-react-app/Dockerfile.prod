@@ -1,0 +1,29 @@
+# Usa un'immagine di Node.js come base per la fase di build
+FROM node:20 AS build
+
+# Imposta la directory di lavoro
+WORKDIR /app
+
+# Copia package.json e package-lock.json
+COPY package*.json ./
+
+# Installa le dipendenze
+RUN npm install
+
+# Copia il resto del codice sorgente
+COPY . .
+
+# Compila l'applicazione React
+RUN npm run build
+
+# Usa un'immagine di Apache per la fase di produzione
+FROM httpd:2.4
+
+# Copia i file statici della build di React nella directory di Apache
+COPY --from=build /app/build /usr/local/apache2/htdocs/
+
+# Espone la porta 80
+EXPOSE 80
+
+# Avvia Apache
+CMD ["httpd-foreground"]
